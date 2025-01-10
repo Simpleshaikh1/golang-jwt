@@ -18,6 +18,7 @@ import (
 	"log"
 	_ "log"
 	"net/http"
+	"strconv"
 	_ "strconv"
 	"time"
 )
@@ -134,11 +135,63 @@ func Login() gin.HandlerFunc {
 
 		token, refreshToken, _ := helper.GenerateAllTokens(*foundUser.Email, *foundUser.FirstName, *foundUser.LastName, *foundUser.User_type, *&foundUser.User_id)
 		helper.UpdateAllTokens(token, refreshToken, foundUser.User_id)
+		err = userCollection.FindOne(ctx, bson.M{"user_id": foundUser.User_id}).Decode(&foundUser)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": foundUser})
 	}
 
 }
 
-func GetUsers() {
+func GetUsers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		err := helper.CheckUserType(c, "ADMIN")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+
+		recordPerPage, err := strconv.Atoi(c.Query("recordPerPage"))
+		if err != nil || recordPerPage < 1 {
+			recordPerPage = 10
+		}
+		page, err1 := strconv.Atoi(c.Query("Page"))
+		if err1 != nil || page < 1 {
+			page = 1
+		}
+
+		var startIndex = (page - 1) * recordPerPage
+		//startIndex = startIndex - recordPerPage
+		startIndex, err = strconv.Atoi(c.Query("startIndex"))
+
+		matchStage := bson.D{{"$match", bson.D{{}}}}
+		groupStage := bson.D{{"$group", bson.D{
+			{"_id", bson.D{{"_id", "null"}}},
+			{"total_count", bson.D{{"$sum", 1}}},
+			{"data", bson.D{{"$push", "$$ROOT"}}}},
+		}}
+		projectStage := bson.D{{"$project", bson.D{
+			{"_id", 0},
+			{"total_count", bson.D{{"$sum", 1}}},
+			{"user_items", bson.D{{"$slice", []interface{}{"$data", startIndex, recordPerPage}}}},
+		}}}
+
+		result, err := userCollection.Aggregate(ctx, mongo.Pipeline{matchStage, groupStage, projectStage})
+
+		defer cancel()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "err occured while listing user items"})
+		}
+		var allUsers []bson.M
+		if err = result.All(ctx, &allUsers); err != nil {
+			log.Fatal(err)
+		}
+		c.JSON(http.StatusOK, gin.H{"data": allUsers})
+	}
 
 }
 
