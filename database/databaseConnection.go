@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -31,7 +32,11 @@ func DBinstace() *mongo.Client {
 
 	err = client.Connect(ctx)
 	if err != nil {
-		log.Fatal(err)
+		if errors.Is(err, context.DeadlineExceeded) {
+			log.Fatal("Connection timed out after 10 seconds", err)
+		} else {
+			log.Fatal("Failed to connect to MongoDB:", err)
+		}
 	}
 
 	fmt.Println("Connected to MongoDB!")
