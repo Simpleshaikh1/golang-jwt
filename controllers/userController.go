@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	_ "fmt"
 	"github.com/Simpleshaikh1/golang-jwt/database"
 	helper "github.com/Simpleshaikh1/golang-jwt/helpers"
@@ -66,7 +67,22 @@ func Signup() gin.HandlerFunc {
 		user.Updated_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 		user.ID = primitive.NewObjectID()
 		user.User_id = user.ID.Hex()
-		token, refreshToken, _ := helper.GenerateAllTokens(*user.Email, *user.FirstName, *user.LastName)
+		token, refreshToken, err := helper.GenerateAllTokens(*user.Email, *user.FirstName, *user.LastName, *user.User_type, *&user.User_id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			log.Panic(err)
+		}
+		user.Token = &token
+		user.Refresh_token = &refreshToken
+
+		resultInsertionNumber, insertErr := userCollection.InsertOne(ctx, user)
+		if insertErr != nil {
+			msg, _ := fmt.Printf("User item was not created")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
+			return
+		}
+		defer cancel()
+		c.JSON(http.StatusOK, gin.H{"data": resultInsertionNumber})
 	}
 }
 
