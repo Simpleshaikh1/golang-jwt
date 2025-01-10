@@ -27,7 +27,3 @@ func MatchUserTypeToUid(c *gin.Context, userId string) (err error) {
 	err = CheckUserType(c, userType)
 	return err
 }
-
-func GenerateAllTokens() {
-
-}
