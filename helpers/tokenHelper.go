@@ -28,7 +28,7 @@ var userCollection *mongo.Collection = database.OpenCollection(database.Client, 
 
 var SecretKey = os.Getenv("SECRET_KEY")
 
-func GenerateAllTokens(email string, firstName string, lastName string, uid string, userType string) (signedToken string, signedRefreshToken string, err error) {
+func GenerateAllTokens(email string, firstName string, lastName string, userType string, uid string) (signedToken string, signedRefreshToken string, err error) {
 	claims := &SignedDetails{
 		Email:      email,
 		First_name: firstName,
@@ -68,13 +68,13 @@ func ValidateToken(signedToken string) (claims *SignedDetails, msg string) {
 	tokenClaims, ok := token.Claims.(*SignedDetails)
 	if !ok {
 		msg = fmt.Sprintf("Invalid token")
-		msg = err.Error()
+		//msg = err.Error()
 		return
 	}
 
 	if tokenClaims.ExpiresAt < time.Now().Local().Unix() {
 		msg = fmt.Sprintf("Token is expired")
-		msg = err.Error()
+		//msg = err.Error()
 		return
 	}
 
