@@ -1,9 +1,9 @@
 package routes
 
 import (
+	controller "github.com/Simpleshaikh1/golang-jwt/controllers"
+	"github.com/Simpleshaikh1/golang-jwt/middleware"
 	"github.com/gin-gonic/gin"
-	controller "jwt-auth/controllers"
-	"jwt-auth/middleware"
 )
 
 func UserRoutes(incomingRoutes *gin.Engine) {
