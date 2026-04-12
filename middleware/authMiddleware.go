@@ -4,7 +4,6 @@ import (
 	"fmt"
 	helpers "github.com/Simpleshaikh1/golang-jwt/helpers"
 	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 )
 
@@ -16,10 +15,9 @@ func Authenticate() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		claims, err := helpers.ValidateToken(clientToken)
-		log.Printf("User type from context: %s", claims.User_type)
-		if err != "" {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		claims, msg := helpers.ValidateToken(clientToken)
+		if msg != "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
 			c.Abort()
 			return
 		}

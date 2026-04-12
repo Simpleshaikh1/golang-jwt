@@ -3,7 +3,6 @@ package helpers
 import (
 	"context"
 	"fmt"
-	_ "fmt"
 	"github.com/Simpleshaikh1/golang-jwt/database"
 	jwt "github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson"
